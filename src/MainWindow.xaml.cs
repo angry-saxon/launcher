@@ -20,7 +20,7 @@ namespace CanaryLauncherUpdate
 {
 	public partial class MainWindow : Window
 	{
-		static string launcerConfigUrl = "https://raw.githubusercontent.com/opentibiabr/canary-launcher/main/launcher_config.json";
+		static string launcerConfigUrl = "https://theculling.goodelephants.com/launcher/launcher_config.json";
 		// Load informations of launcher_config.json file
 		static ClientConfig clientConfig = ClientConfig.loadFromFile(launcerConfigUrl);
 
@@ -191,60 +191,60 @@ namespace CanaryLauncherUpdate
 			}
 		}
 
-		private void ExtractZip(string path, ExtractExistingFileAction existingFileAction)
-		{
-			using (ZipFile modZip = ZipFile.Read(path))
-			{
-				foreach (ZipEntry zipEntry in modZip)
-				{
-					zipEntry.Extract(GetLauncherPath(), existingFileAction);
-				}
-			}
-		}
+        private void ExtractZip(string path, Ionic.Zip.ExtractExistingFileAction existingFileAction)
+        {
+            using (Ionic.Zip.ZipFile modZip = Ionic.Zip.ZipFile.Read(path))
+            {
+                foreach (Ionic.Zip.ZipEntry zipEntry in modZip)
+                {
+                    zipEntry.Extract(GetLauncherPath(), existingFileAction);
+                }
+            }
+        }
 
-		private async void Client_DownloadFileCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
-		{
-			buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_play.png")));
-			buttonPlayIcon.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/icon_play.png"));
+        private async void Client_DownloadFileCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
+        {
+            buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_play.png")));
+            buttonPlayIcon.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/icon_play.png"));
 
-			if (clientConfig.replaceFolders)
-			{
-				foreach (ReplaceFolderName folderName in clientConfig.replaceFolderName)
-				{
-					string folderPath = Path.Combine(GetLauncherPath(), folderName.name);
-					if (Directory.Exists(folderPath))
-					{
-						Directory.Delete(folderPath, true);
-					}
-				}
-			}
+            if (clientConfig.replaceFolders)
+            {
+                foreach (ReplaceFolderName folderName in clientConfig.replaceFolderName)
+                {
+                    string folderPath = Path.Combine(GetLauncherPath(), folderName.name);
+                    if (Directory.Exists(folderPath))
+                    {
+                        Directory.Delete(folderPath, true);
+                    }
+                }
+            }
 
-			// Adds the task to a secondary task to prevent the program from crashing while this is running
-			await Task.Run(() =>
-			{
-				Directory.CreateDirectory(GetLauncherPath());
-				ExtractZip(GetLauncherPath() + "/tibia.zip", ExtractExistingFileAction.OverwriteSilently);
-				File.Delete(GetLauncherPath() + "/tibia.zip");
-			});
-			progressbarDownload.Value = 100;
+            // Adds the task to a secondary task to prevent the program from crashing while this is running
+            await Task.Run(() =>
+            {
+                Directory.CreateDirectory(GetLauncherPath());
+                ExtractZip(GetLauncherPath() + "/tibia.zip", Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
+                File.Delete(GetLauncherPath() + "/tibia.zip");
+            });
+            progressbarDownload.Value = 100;
 
-			// Download launcher_config.json from url to the launcher path
-			WebClient webClient = new WebClient();
-			string localPath = Path.Combine(GetLauncherPath(true), "launcher_config.json");
-			webClient.DownloadFile(launcerConfigUrl, localPath);
+            // Download launcher_config.json from url to the launcher path
+            WebClient webClient = new WebClient();
+            string localPath = Path.Combine(GetLauncherPath(true), "launcher_config.json");
+            webClient.DownloadFile(launcerConfigUrl, localPath);
 
-			AddReadOnly();
-			CreateShortcut();
+            AddReadOnly();
+            CreateShortcut();
 
-			needUpdate = false;
-			clientDownloaded = true;
-			labelClientVersion.Content = GetClientVersion(GetLauncherPath(true));
-			buttonPlay_tooltip.Text = GetClientVersion(GetLauncherPath(true));
-			labelClientVersion.Visibility = Visibility.Visible;
-			buttonPlay.Visibility = Visibility.Visible;
-			progressbarDownload.Visibility = Visibility.Collapsed;
-			labelDownloadPercent.Visibility = Visibility.Collapsed;
-		}
+            needUpdate = false;
+            clientDownloaded = true;
+            labelClientVersion.Content = GetClientVersion(GetLauncherPath(true));
+            buttonPlay_tooltip.Text = GetClientVersion(GetLauncherPath(true));
+            labelClientVersion.Visibility = Visibility.Visible;
+            buttonPlay.Visibility = Visibility.Visible;
+            progressbarDownload.Visibility = Visibility.Collapsed;
+            labelDownloadPercent.Visibility = Visibility.Collapsed;
+        }
 
 		private void Client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
 		{

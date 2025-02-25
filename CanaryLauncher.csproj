@@ -58,7 +58,7 @@
     <Compile Include="src\MainWindow.xaml.cs" />
     <Compile Include="src\SplashScreen.xaml.cs" />
     <PackageReference Include="Ionic.Zip" Version="1.9.1.8" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="assets\icons.xaml">

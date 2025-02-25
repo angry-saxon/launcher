@@ -9,21 +9,21 @@ NOTE: Set it to "false" or only "" to not use the client folder, so everything w
 • executable The path to the client's executable file, represented as "bin/client.exe"
 */
 {
-	"clientVersion": "13.20.13560",
+	"clientVersion": "1.0",
 	"launcherVersion": "1.0",
 	"replaceFolders": true,
 	"replaceFolderName": [
 		{
-			"name": "assets"
-		},
-		{
-			"name": "storeimages"
-		},
-		{
 			"name": "bin"
+		},
+		{
+			"name": "data"
+		},
+		{
+			"name": "modules"
 		}
 	],
-	"clientFolder": "Tibia",
-	"newClientUrl" : "https://github.com/opentibiabr/canary-launcher/releases/download/1.0.0/client-to-update.zip",
+	"clientFolder": "Client",
+	"newClientUrl" : "https://theculling.goodelephants.com/launcher/client-to-update.zip",
 	"clientExecutable": "client.exe"
 }
