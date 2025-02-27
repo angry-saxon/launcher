@@ -1,14 +1,8 @@
 using System;
-using System.Windows;
 using System.IO;
 using System.Net;
-using System.Windows.Threading;
 using System.Net.Http;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.IO.Compression;
+using System.Windows;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -16,91 +10,126 @@ using LauncherConfig;
 
 namespace CanaryLauncherUpdate
 {
-	public partial class SplashScreen : Window
-	{
-		static string launcerConfigUrl = "https://theculling.goodelephants.com/launcher/launcher_config.json";
-		// Load informations of launcher_config.json file
-		static ClientConfig clientConfig = ClientConfig.loadFromFile(launcerConfigUrl);
+    public partial class SplashScreen : Window
+    {
+        private const string LauncherConfigUrl = "http://51.81.154.175/updates/launcher_config.json";
+        private ClientConfig clientConfig;
+        private string clientExecutableName;
+        private string urlClient;
+        private HttpClient httpClient;
 
-		static string clientExecutableName = clientConfig.clientExecutable;
-		static string urlClient = clientConfig.newClientUrl;
+        public SplashScreen()
+        {
+            InitializeComponent();
+            // Increase the timeout to 20 seconds; adjust as needed.
+            httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+            this.Loaded += SplashScreen_Loaded;
+        }
 
-		static readonly HttpClient httpClient = new HttpClient();
-		DispatcherTimer timer = new DispatcherTimer();
+        private async void SplashScreen_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                txtStatus.Content = "Loading configuration...";
+                // Load configuration asynchronously.
+                clientConfig = await ClientConfig.LoadFromFileAsync(LauncherConfigUrl);
+                clientExecutableName = clientConfig.clientExecutable;
+                urlClient = clientConfig.newClientUrl;
+                txtStatus.Content = "Configuration loaded.";
 
-		private string GetLauncherPath(bool onlyBaseDirectory = false)
-		{
-			string launcherPath = "";
-			if (string.IsNullOrEmpty(clientConfig.clientFolder) || onlyBaseDirectory) {
-				launcherPath = AppDomain.CurrentDomain.BaseDirectory.ToString();
-			} else {
-				launcherPath = AppDomain.CurrentDomain.BaseDirectory.ToString() + "/" + clientConfig.clientFolder;
-			}
+                string launcherBasePath = LauncherUtils.GetLauncherPath(clientConfig.clientFolder, true);
+                string launcherConfigPath = System.IO.Path.Combine(launcherBasePath, "launcher_config.json");
 
-			return launcherPath;
-		}
+                txtStatus.Content = "Checking client version...";
+                // Check if the client is up-to-date.
+                bool isUpToDate = false;
+                if (File.Exists(launcherConfigPath))
+                {
+                    string actualVersion = LauncherUtils.GetClientVersion(launcherBasePath);
+                    if (clientConfig.clientVersion == actualVersion &&
+                        Directory.Exists(LauncherUtils.GetLauncherPath(clientConfig.clientFolder)))
+                    {
+                        isUpToDate = true;
+                    }
+                }
 
-		static string GetClientVersion(string path)
-		{
-			string json = path + "/launcher_config.json";
-			StreamReader stream = new StreamReader(json);
-			dynamic jsonString = stream.ReadToEnd();
-			dynamic versionclient = JsonConvert.DeserializeObject(jsonString);
-			foreach (string version in versionclient)
-			{
-				return version;
-			}
+                if (isUpToDate)
+                {
+                    txtStatus.Content = "Client is up-to-date. Launching client...";
+                    StartClient();
+                }
+                else
+                {
+                    txtStatus.Content = "Client not up-to-date. Checking server connectivity...";
+                    await CheckServerAndLaunchMainWindow();
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatus.Content = "Error during startup: " + ex.Message;
+                MessageBox.Show("Error during startup: " + ex.Message);
+                this.Close();
+            }
+        }
 
-			return "";
-		}
+        private async Task CheckServerAndLaunchMainWindow()
+        {
+            try
+            {
+                txtStatus.Content = "Connecting to server...";
+                // Use a lightweight GET request to check the server response.
+                HttpResponseMessage response = await httpClient.GetAsync(urlClient);
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    txtStatus.Content = "Server not found. Launching in offline mode...";
+                    MessageBox.Show("Server not found. Launching in offline mode.");
+                    LaunchMainWindowOffline();
+                    return;
+                }
+                txtStatus.Content = "Server responsive. Launching main window...";
+                MainWindow mainWindow = new MainWindow();
+                mainWindow.Show();
+                this.Close();
+            }
+            catch (TaskCanceledException)
+            {
+                // The request timed out.
+                txtStatus.Content = "Connection timed out. Launching in offline mode...";
+                MessageBox.Show("Connection timed out. Launching in offline mode.");
+                LaunchMainWindowOffline();
+            }
+            catch (Exception ex)
+            {
+                txtStatus.Content = "Error checking server: " + ex.Message + ". Launching in offline mode...";
+                MessageBox.Show("Error checking server: " + ex.Message + ". Launching in offline mode.");
+                LaunchMainWindowOffline();
+            }
+        }
 
-		private void StartClient()
-		{
-			if (File.Exists(GetLauncherPath() + "/bin/" + clientExecutableName)) {
-				Process.Start(GetLauncherPath() + "/bin/" + clientExecutableName);
-				this.Close();
-			}
-		}
+        private void LaunchMainWindowOffline()
+        {
+            MainWindow mainWindow = new MainWindow();
+            mainWindow.Show();
+            this.Close();
+        }
 
-		public SplashScreen()
-		{
-			string newVersion = clientConfig.clientVersion;
-			if (newVersion == null)
-			{
-				this.Close();
-			}
-
-			// Start the client if the versions are the same
-			if (File.Exists(GetLauncherPath(true) + "/launcher_config.json")) {
-				string actualVersion = GetClientVersion(GetLauncherPath(true));
-				if (newVersion == actualVersion && Directory.Exists(GetLauncherPath()) ) {
-					StartClient();
-				}
-			}
-
-			InitializeComponent();
-			timer.Tick += new EventHandler(timer_SplashScreen);
-			timer.Interval = new TimeSpan(0, 0, 5);
-			timer.Start();
-		}
-
-		public async void timer_SplashScreen(object sender, EventArgs e)
-		{
-			var requestClient = new HttpRequestMessage(HttpMethod.Post, urlClient);
-			var response = await httpClient.SendAsync(requestClient);
-			if (response.StatusCode == HttpStatusCode.NotFound)
-			{
-				this.Close();
-			}
-
-			if (!Directory.Exists(GetLauncherPath()))
-			{
-				Directory.CreateDirectory(GetLauncherPath());
-			}
-			MainWindow mainWindow = new MainWindow();
-			this.Close();
-			mainWindow.Show();
-			timer.Stop();
-		}
-	}
+        private void StartClient()
+        {
+            txtStatus.Content = "Starting client...";
+            string launcherPath = LauncherUtils.GetLauncherPath(clientConfig.clientFolder, true);
+            string exePath = System.IO.Path.Combine(launcherPath, "", clientExecutableName);
+            try
+            {
+                Process.Start(exePath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error starting client: " + ex.Message);
+            }
+            finally
+            {
+                this.Close();
+            }
+        }
+    }
 }

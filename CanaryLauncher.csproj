@@ -6,9 +6,9 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{E21D451C-4724-4738-A716-DD441AD38747}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>CanaryLauncher</RootNamespace>
+    <RootNamespace>TheCullingLauncher</RootNamespace>
     <ApplicationIcon>icon.ico</ApplicationIcon>
-    <AssemblyName>CanaryLauncher</AssemblyName>
+    <AssemblyName>TheCullingLauncher</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -55,6 +55,7 @@
     <Compile Include="src\App.xaml.cs" />
     <Compile Include="src\AssemblyInfo.cs" />
     <Compile Include="src\ClientConfig.cs" />
+    <Compile Include="src\LauncherUtils.cs" />
     <Compile Include="src\MainWindow.xaml.cs" />
     <Compile Include="src\SplashScreen.xaml.cs" />
     <PackageReference Include="Ionic.Zip" Version="1.9.1.8" />
@@ -92,6 +93,12 @@
     <Resource Include="assets\logo.png" />
     <Resource Include="assets\logo_company.png" />
     <Resource Include="assets\rh_lore.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="src\splashscreen.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="src\logo.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

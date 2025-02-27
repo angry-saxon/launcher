@@ -12,15 +12,15 @@
 		WindowStyle="None"
 		WindowStartupLocation="CenterScreen"
 		Title="Loading Launcher" Height="400" Width="800">
-	<Grid>
-		<Image
-			Height="150"
-			Source="pack://application:,,,/Assets/logo.png"
+    <Grid>
+        <Image
+			Height="256"
+			Source="/src/logo.png"
 			Stretch="Uniform"
 			HorizontalAlignment="Center"
 			VerticalAlignment="Center"
 			Visibility="Visible"></Image>
-		<TextBlock
+        <TextBlock
 			HorizontalAlignment="Center"
 			VerticalAlignment="Center"
 			Margin="0, 180, 0, 0"
@@ -28,5 +28,6 @@
 			FontSize="16"
 			Text="Loading"
 			Visibility="Collapsed"/>
-	</Grid>
+        <Label x:Name="txtStatus" Content="Status" HorizontalAlignment="Left" Margin="296,232,0,0" VerticalAlignment="Top" Width="211" Background="Transparent" Foreground="Red"/>
+    </Grid>
 </Window>

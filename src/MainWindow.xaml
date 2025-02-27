@@ -7,8 +7,8 @@
 		xmlns:local="clr-namespace:CanaryLauncherUpdate"
 		Icon="pack://application:,,,/Assets/launcher_ico.png"
 		mc:Ignorable="d" 
-		Height="400"
-		Width="800"
+		Height="680"
+		Width="1024"
 		FontFamily="Verdana"
 		Background="#131415"
 		x:Name="home"
@@ -17,60 +17,60 @@
 		WindowState="Normal"
 		WindowStartupLocation="CenterScreen"
 		Title="Tibia Launcher"
-		Loaded="TibiaLauncher_Load">
-	<Grid>
+		Loaded="MainWindow_Loaded">
+    <Grid>
 
-		<Grid.ColumnDefinitions>
-			<ColumnDefinition Width="*"/>
-		</Grid.ColumnDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-		<Grid.RowDefinitions>
-			<RowDefinition Height="*"/>
-			<RowDefinition Height="100"/>
-			<RowDefinition Height="*"/>
-		</Grid.RowDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="100"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-		<Grid.Resources>
-			<BitmapImage x:Key="BackGroundKey" UriSource="pack://application:,,,/Assets/background.jpg"/>
-			<BitmapImage x:Key="LogoKey" UriSource="pack://application:,,,/Assets/logo.png"/>
-			<BitmapImage x:Key="LogoCompanyKey" UriSource="pack://application:,,,/Assets/logo_company.png"/>
-			<BitmapImage x:Key="BGButtonUpdateKey" UriSource="pack://application:,,,/Assets/bg_button_update.png"/>
-			<BitmapImage x:Key="ButtonPlayKey" UriSource="pack://application:,,,/Assets/button_play.png"/>
-			<BitmapImage x:Key="IconPlayKey" UriSource="pack://application:,,,/Assets/icon_play.png"/>
-			<BitmapImage x:Key="BgHintsKey" UriSource="pack://application:,,,/Assets/bg_hints.png"/>
-			<BitmapImage x:Key="RhLoreKey" UriSource="pack://application:,,,/Assets/rh_lore.png"/>
-		</Grid.Resources>
-		<Grid.Background>
-			<ImageBrush ImageSource="{StaticResource BackGroundKey}" Stretch="UniformToFill" Opacity="100"></ImageBrush>
-		</Grid.Background>
-		<StackPanel
+        <Grid.Resources>
+            <BitmapImage x:Key="BackGroundKey" UriSource="pack://application:,,,/Assets/background.jpg"/>
+            <BitmapImage x:Key="LogoKey" UriSource="pack://application:,,,/Assets/logo.png"/>
+            <BitmapImage x:Key="LogoCompanyKey" UriSource="pack://application:,,,/Assets/logo_company.png"/>
+            <BitmapImage x:Key="BGButtonUpdateKey" UriSource="pack://application:,,,/Assets/bg_button_update.png"/>
+            <BitmapImage x:Key="ButtonPlayKey" UriSource="pack://application:,,,/Assets/button_play.png"/>
+            <BitmapImage x:Key="IconPlayKey" UriSource="pack://application:,,,/Assets/icon_play.png"/>
+            <BitmapImage x:Key="BgHintsKey" UriSource="pack://application:,,,/Assets/bg_hints.png"/>
+            <BitmapImage x:Key="RhLoreKey" UriSource="pack://application:,,,/Assets/rh_lore.png"/>
+        </Grid.Resources>
+        <Grid.Background>
+            <ImageBrush ImageSource="{StaticResource BackGroundKey}" Stretch="UniformToFill" Opacity="100"></ImageBrush>
+        </Grid.Background>
+        <StackPanel
 			Grid.Column="1"
 			HorizontalAlignment="Right"
 			VerticalAlignment="Top"
 			Margin="0"
 			Orientation="Horizontal"
 			FlowDirection="RightToLeft">
-			<Button
+            <Button
 				x:Name="CloseButton"
 				Style="{StaticResource WindowButtonStyle}"
 				Content="{StaticResource close_ico}"
 				Click="CloseButton_Click"
 				Tag="IsCloseButton"
 				Cursor="Hand"/>
-			<Button
+            <Button
 				x:Name="MinimizeButton"
 				Style="{StaticResource WindowButtonStyle}"
 				Content="{StaticResource minimize_ico}"
 				Click="MinimizeButton_Click"
 				Cursor="Hand"/>
-		</StackPanel>
+        </StackPanel>
 
-		<StackPanel
+        <StackPanel
 			Grid.Row="0"
 			VerticalAlignment="Bottom"
 			HorizontalAlignment="Center"
 			Margin="0, 15">
-			<Image
+            <Image
 				x:Name="ImageLogoServer"
 				Height="120"
 				Source="{StaticResource LogoKey}"
@@ -78,19 +78,19 @@
 				HorizontalAlignment="Center"
 				VerticalAlignment="Center"
 				Visibility="Visible">
-			</Image>
-		</StackPanel>
-		<StackPanel
+            </Image>
+        </StackPanel>
+        <StackPanel
 			Grid.Row="1"
 			Width="132"
 			Height="85"
 			VerticalAlignment="Top"
 			HorizontalAlignment="Center">
-			<StackPanel.Background>
-				<ImageBrush ImageSource="{StaticResource BGButtonUpdateKey}" Stretch="Fill"></ImageBrush>
-			</StackPanel.Background>
-			<StackPanel>
-				<Button
+            <StackPanel.Background>
+                <ImageBrush ImageSource="{StaticResource BGButtonUpdateKey}" Stretch="Fill"></ImageBrush>
+            </StackPanel.Background>
+            <StackPanel>
+                <Button
 					x:Name="buttonPlay"
 					Width="100"
 					Height="42"
@@ -103,62 +103,62 @@
 					MouseLeave="buttonPlay_MouseLeave"
 					MouseEnter="buttonPlay_MouseEnter">
 
-					<Button.Background>
-						<ImageBrush ImageSource="{StaticResource ButtonPlayKey}"></ImageBrush>
-					</Button.Background>
+                    <Button.Background>
+                        <ImageBrush ImageSource="{StaticResource ButtonPlayKey}"></ImageBrush>
+                    </Button.Background>
 
-					<Button.ToolTip>
-						<ToolTip>
-							<TextBlock
+                    <Button.ToolTip>
+                        <ToolTip>
+                            <TextBlock
 								x:Name="buttonPlay_tooltip"
 								Foreground="#404348"
 								FontWeight="Bold"
 								Text="Play Game">
-							</TextBlock>
-						</ToolTip>
-					</Button.ToolTip>
+                            </TextBlock>
+                        </ToolTip>
+                    </Button.ToolTip>
 
-					<Button.Content>
-						<Image
+                    <Button.Content>
+                        <Image
 							x:Name="buttonPlayIcon"
 							Source="{StaticResource IconPlayKey}"
 							Stretch="Uniform"
 							Height="32"></Image>
-					</Button.Content>
-					<Button.Style>
-						<Style TargetType="{x:Type Button}">
-							<Setter Property="Template">
-								<Setter.Value>
-									<ControlTemplate TargetType="{x:Type Button}">
-										<Border Background="{TemplateBinding Background}">
-											<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-										</Border>
-									</ControlTemplate>
-								</Setter.Value>
-							</Setter>
-							<Style.Triggers>
-								<Trigger Property="IsMouseOver" Value="True"></Trigger>
-							</Style.Triggers>
-						</Style>
-					</Button.Style>
-				</Button>
-				<ProgressBar
+                    </Button.Content>
+                    <Button.Style>
+                        <Style TargetType="{x:Type Button}">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Border Background="{TemplateBinding Background}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True"></Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <ProgressBar
 					x:Name="progressbarDownload"
 					Width="100"
 					Height="40"
 					Margin="0, 8, 0, 0"
 					Value="100"
 					Visibility="Collapsed">
-					<ProgressBar.Foreground>
-						<LinearGradientBrush
+                    <ProgressBar.Foreground>
+                        <LinearGradientBrush
 								StartPoint="0.5, 1.5"
 								EndPoint="0.5, 0">
-							<GradientStop Color="#dd9323" Offset="0.4" />
-							<GradientStop Color="#6b4711" Offset="0.8" />
-						</LinearGradientBrush>
-					</ProgressBar.Foreground>
-				</ProgressBar>
-				<Label
+                            <GradientStop Color="#dd9323" Offset="0.4" />
+                            <GradientStop Color="#6b4711" Offset="0.8" />
+                        </LinearGradientBrush>
+                    </ProgressBar.Foreground>
+                </ProgressBar>
+                <Label
 					x:Name="labelClientVersion"
 					FontFamily="Verdana"
 					FontSize="13"
@@ -167,7 +167,7 @@
 					HorizontalAlignment="Center"
 					Margin="0, 2, 0, 0"
 					Visibility="Visible">Client Version</Label>
-				<Label
+                <Label
 					x:Name="labelDownloadPercent"
 					FontFamily="Verdana"
 					FontSize="10"
@@ -176,99 +176,94 @@
 					HorizontalAlignment="Center"
 					Margin="0, 2, 0, 0"
 					Visibility="Collapsed">Download</Label>
-			</StackPanel>
-		</StackPanel>
-		<StackPanel
+            </StackPanel>
+        </StackPanel>
+        <StackPanel
 			Grid.Row="2"
 			Width="550"
 			Height="86"
 			VerticalAlignment="Top"
 			HorizontalAlignment="Center">
-			<StackPanel.Background>
-				<ImageBrush ImageSource="{StaticResource BgHintsKey}" Stretch="Uniform" AlignmentY="Top" AlignmentX="Center"></ImageBrush>
-			</StackPanel.Background>
+            <StackPanel.Background>
+                <ImageBrush ImageSource="{StaticResource BgHintsKey}" Stretch="Uniform" AlignmentY="Top" AlignmentX="Center"></ImageBrush>
+            </StackPanel.Background>
 
-			<Grid>
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*"/>
-				</Grid.ColumnDefinitions>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-				<Grid.RowDefinitions>
-					<RowDefinition Height="18"/>
-					<RowDefinition Height="65"/>
-				</Grid.RowDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="18"/>
+                    <RowDefinition Height="65"/>
+                </Grid.RowDefinitions>
 
-				<TextBlock
+                <TextBlock
 					Grid.Row="0"
 					VerticalAlignment="Center"
 					HorizontalAlignment="Center"
 					FontFamily="Verdana"
 					FontSize="12"
 					FontWeight="Bold"
-					Foreground="#909090">Genesis</TextBlock>
-				<Grid
+					Foreground="#FFFFFF">Welcome to The Culling</TextBlock>
+                <Grid
 					Grid.Row="1"
 					Margin="10, 3, 10, 3">
 
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="65"/>
-						<ColumnDefinition Width="*"/>
-					</Grid.ColumnDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="65"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-					<Image
+                    <Image
 						Grid.Column="0"
 						Source="{StaticResource RhLoreKey}"
 						Width="60"
 						Stretch="Uniform"></Image>
-					<TextBlock
+                    <TextBlock
 						Grid.Column="1"
-						x:Name="hintsBox"
+						x:Name="txtPatchNotes"
 						Margin="5, 0, 0, 0"
-						Foreground="#bfbfbf"
+						Foreground="#FFFFFF"
 						FontFamily="Verdana"
-						FontSize="12">A new goddess stepped out of the void like a new-born mermaid from<LineBreak/> her shell.
-						The amazed elder gods watched her divine beauty in awed<LineBreak/> admiration,
-						for everything in her was perfect harmony. They agreed<LineBreak/> to call her Tibiasula.</TextBlock>
-				</Grid>
+						FontSize="12" Text="Patch notes"/>
+                    <TextBlock
+                        x:Name="txtInfo"
+                        Margin="10,110,69,-110"
+                        Foreground="#FFFFFF"
+                        FontFamily="Verdana"
+                        FontSize="12" Text="A shortcut will be created on your desktop to launch the game!" Grid.Column="1"/>
+                </Grid>
 
-			</Grid>
-		</StackPanel>
-		
-		<StackPanel
+            </Grid>
+        </StackPanel>
+
+        <StackPanel
 			Grid.Row="2"
 			VerticalAlignment="Bottom">
-			<Grid>
-				
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*"/>
-					<ColumnDefinition Width="*"/>
-					<ColumnDefinition Width="*"/>
-				</Grid.ColumnDefinitions>
+            <Grid>
 
-				<Grid.RowDefinitions>
-					<RowDefinition Height="*"/>
-				</Grid.RowDefinitions>
-				
-				<TextBlock
-					Grid.Column="0"
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock
+					Grid.Column="1"
 					x:Name="labelVersion"
-					HorizontalAlignment="Left"
-					VerticalAlignment="Bottom"
+					HorizontalAlignment="Center"
+					VerticalAlignment="Top"
 					FontFamily="Verdana"
 					FontSize="12"
 					FontWeight="Bold"
 					Foreground="#747474"
-					Margin="10">Version</TextBlock>
-				<Image
-					x:Name="ImageLogoCompany"
-					Grid.Column="1"
-					Source="{StaticResource LogoCompanyKey}"
-					Height="22"
-					Stretch="Uniform"
-					VerticalAlignment="Top"
-					HorizontalAlignment="Center"
-					Margin="0, 0, 0, 20"/>
-			</Grid>
-		</StackPanel>
-	</Grid>
+					Margin="0,-12,0,0">Version</TextBlock>
+            </Grid>
+        </StackPanel>
+    </Grid>
 </Window>

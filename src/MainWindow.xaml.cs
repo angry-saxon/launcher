@@ -5,10 +5,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Net;
-using System.Collections.Generic;
-using System.Linq;
 using System.Diagnostics;
 using Newtonsoft.Json;
 using System.Net.Http;
@@ -18,324 +14,349 @@ using LauncherConfig;
 
 namespace CanaryLauncherUpdate
 {
-	public partial class MainWindow : Window
-	{
-		static string launcerConfigUrl = "https://theculling.goodelephants.com/launcher/launcher_config.json";
-		// Load informations of launcher_config.json file
-		static ClientConfig clientConfig = ClientConfig.loadFromFile(launcerConfigUrl);
+    public partial class MainWindow : Window
+    {
+        private const string LauncherConfigUrl = "http://51.81.154.175/updates/launcher_config.json";
+        private ClientConfig clientConfig;
+        private string clientExecutableName;
+        private string urlClient;
+        private string programVersion;
+        private string newVersion = "";
+        private bool clientDownloaded = false;
+        private bool needUpdate = false;
+        private HttpClient httpClient = new HttpClient();
 
-		static string clientExecutableName = clientConfig.clientExecutable;
-		static string urlClient = clientConfig.newClientUrl;
-		static string programVersion = clientConfig.launcherVersion;
-
-		string newVersion = "";
-		bool clientDownloaded = false;
-		bool needUpdate = false;
-
-		static readonly HttpClient httpClient = new HttpClient();
-		WebClient webClient = new WebClient();
-
-		private string GetLauncherPath(bool onlyBaseDirectory = false)
-		{
-			string launcherPath = "";
-			if (string.IsNullOrEmpty(clientConfig.clientFolder) || onlyBaseDirectory) {
-				launcherPath = AppDomain.CurrentDomain.BaseDirectory.ToString();
-			} else {
-				launcherPath = AppDomain.CurrentDomain.BaseDirectory.ToString() + "/" + clientConfig.clientFolder;
-			}
-
-			return launcherPath;
-		}
-
-		public MainWindow()
-		{
-			InitializeComponent();
-		}
-
-		static void CreateShortcut()
-		{
-			string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-			string shortcutPath = Path.Combine(desktopPath, clientConfig.clientFolder + ".lnk");
-			Type t = Type.GetTypeFromProgID("WScript.Shell");
-			dynamic shell = Activator.CreateInstance(t);
-			var lnk = shell.CreateShortcut(shortcutPath);
-			try
-			{
-				lnk.TargetPath = Assembly.GetExecutingAssembly().Location.Replace(".dll", ".exe");
-				lnk.Description = clientConfig.clientFolder;
-				lnk.Save();
-			}
-			finally
-			{
-				System.Runtime.InteropServices.Marshal.FinalReleaseComObject(lnk);
-			}
-		}
-
-		private void TibiaLauncher_Load(object sender, RoutedEventArgs e)
-		{
-			ImageLogoServer.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/logo.png"));
-			ImageLogoCompany.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/logo_company.png"));
-
-			newVersion = clientConfig.clientVersion;
-			progressbarDownload.Visibility = Visibility.Collapsed;
-			labelClientVersion.Visibility = Visibility.Collapsed;
-			labelDownloadPercent.Visibility = Visibility.Collapsed;
-
-			if (File.Exists(GetLauncherPath(true) + "/launcher_config.json"))
-			{
-				// Read actual client version
-				string actualVersion = GetClientVersion(GetLauncherPath(true));
-				labelVersion.Text = "v" + programVersion;
-
-				if (newVersion != actualVersion)
-				{
-					buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_update.png")));
-					buttonPlayIcon.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/icon_update.png"));
-					labelClientVersion.Content = newVersion;
-					labelClientVersion.Visibility = Visibility.Visible;
-					buttonPlay.Visibility = Visibility.Visible;
-					buttonPlay_tooltip.Text = "Update";
-					needUpdate = true;
-				}
-			}
-			if (!File.Exists(GetLauncherPath(true) + "/launcher_config.json") || Directory.Exists(GetLauncherPath()) && Directory.GetFiles(GetLauncherPath()).Length == 0 && Directory.GetDirectories(GetLauncherPath()).Length == 0)
-			{
-				labelVersion.Text = "v" + programVersion;
-				buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_update.png")));
-				buttonPlayIcon.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/icon_update.png"));
-				labelClientVersion.Content = "Download";
-				labelClientVersion.Visibility = Visibility.Visible;
-				buttonPlay.Visibility = Visibility.Visible;
-				buttonPlay_tooltip.Text = "Download";
-				needUpdate = true;
-			}
-		}
-
-		static string GetClientVersion(string path)
-		{
-			string json = path + "/launcher_config.json";
-			StreamReader stream = new StreamReader(json);
-			dynamic jsonString = stream.ReadToEnd();
-			dynamic versionclient = JsonConvert.DeserializeObject(jsonString);
-			foreach (string version in versionclient)
-			{
-				return version;
-			}
-
-			return "";
-		}
-
-		private void AddReadOnly()
-		{
-			// If the files "eventschedule/boostedcreature/onlinenumbers" exist, set them as read-only
-			string eventSchedulePath = GetLauncherPath() + "/cache/eventschedule.json";
-			if (File.Exists(eventSchedulePath)) {
-				File.SetAttributes(eventSchedulePath, FileAttributes.ReadOnly);
-			}
-			string boostedCreaturePath = GetLauncherPath() + "/cache/boostedcreature.json";
-			if (File.Exists(boostedCreaturePath)) {
-				File.SetAttributes(boostedCreaturePath, FileAttributes.ReadOnly);
-			}
-			string onlineNumbersPath = GetLauncherPath() + "/cache/onlinenumbers.json";
-			if (File.Exists(onlineNumbersPath)) {
-				File.SetAttributes(onlineNumbersPath, FileAttributes.ReadOnly);
-			}
-		}
-
-		private void UpdateClient()
-		{
-			if (!Directory.Exists(GetLauncherPath(true)))
-			{
-				Directory.CreateDirectory(GetLauncherPath());
-			}
-			labelDownloadPercent.Visibility = Visibility.Visible;
-			progressbarDownload.Visibility = Visibility.Visible;
-			labelClientVersion.Visibility = Visibility.Collapsed;
-			buttonPlay.Visibility = Visibility.Collapsed;
-			webClient.DownloadProgressChanged += Client_DownloadProgressChanged;
-			webClient.DownloadFileCompleted += Client_DownloadFileCompleted;
-			webClient.DownloadFileAsync(new Uri(urlClient), GetLauncherPath() + "/tibia.zip");
-		}
-
-		private void buttonPlay_Click(object sender, RoutedEventArgs e)
-		{
-			if (needUpdate == true || !Directory.Exists(GetLauncherPath()))
-			{
-				try
-				{
-					UpdateClient();
-				}
-				catch (Exception ex)
-				{
-					labelVersion.Text = ex.ToString();
-				}
-			}
-			else
-			{
-				if (clientDownloaded == true || !Directory.Exists(GetLauncherPath(true)))
-				{
-					Process.Start(GetLauncherPath() + "/bin/" + clientExecutableName);
-					this.Close();
-				}
-				else
-				{
-					try
-					{
-						UpdateClient();
-					}
-					catch (Exception ex)
-					{
-						labelVersion.Text = ex.ToString();
-					}
-				}
-			}
-		}
-
-        private void ExtractZip(string path, Ionic.Zip.ExtractExistingFileAction existingFileAction)
+        public MainWindow()
         {
-            using (Ionic.Zip.ZipFile modZip = Ionic.Zip.ZipFile.Read(path))
+            InitializeComponent();
+            this.Loaded += MainWindow_Loaded;
+        }
+
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
             {
-                foreach (Ionic.Zip.ZipEntry zipEntry in modZip)
+                clientConfig = await ClientConfig.LoadFromFileAsync(LauncherConfigUrl);
+                clientExecutableName = clientConfig.clientExecutable;
+                urlClient = clientConfig.newClientUrl;
+                programVersion = clientConfig.launcherVersion;
+                await LoadRemotePatchNotesAsync();
+
+                // Initialize UI elements.
+                ImageLogoServer.Source = new BitmapImage(new Uri("pack://application:,,,/Assets/logo.png"));
+                //ImageLogoCompany.Source = new BitmapImage(new Uri("pack://application:,,,/Assets/logo_company.png"));
+
+                newVersion = clientConfig.clientVersion;
+                progressbarDownload.Visibility = Visibility.Collapsed;
+                labelClientVersion.Visibility = Visibility.Collapsed;
+                labelDownloadPercent.Visibility = Visibility.Collapsed;
+
+                string launcherBasePath = LauncherUtils.GetLauncherPath(clientConfig.clientFolder, true);
+                string launcherConfigPath = System.IO.Path.Combine(launcherBasePath, "launcher_config.json");
+
+                if (File.Exists(launcherConfigPath))
                 {
-                    zipEntry.Extract(GetLauncherPath(), existingFileAction);
+                    string actualVersion = LauncherUtils.GetClientVersion(launcherBasePath);
+                    labelVersion.Text = "v" + programVersion;
+
+                    if (newVersion != actualVersion)
+                    {
+                        buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri("pack://application:,,,/Assets/button_update.png")));
+                        buttonPlayIcon.Source = new BitmapImage(new Uri("pack://application:,,,/Assets/icon_update.png"));
+                        labelClientVersion.Content = newVersion;
+                        labelClientVersion.Visibility = Visibility.Visible;
+                        buttonPlay.Visibility = Visibility.Visible;
+                        buttonPlay_tooltip.Text = "Update";
+                        needUpdate = true;
+                    }
                 }
+
+                string launcherPath = LauncherUtils.GetLauncherPath(clientConfig.clientFolder);
+                if (!File.Exists(launcherConfigPath) || (Directory.Exists(launcherPath) &&
+                    Directory.GetFiles(launcherPath).Length == 0 && Directory.GetDirectories(launcherPath).Length == 0))
+                {
+                    labelVersion.Text = "v" + programVersion;
+                    buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri("pack://application:,,,/Assets/button_update.png")));
+                    buttonPlayIcon.Source = new BitmapImage(new Uri("pack://application:,,,/Assets/icon_update.png"));
+                    labelClientVersion.Content = "Download";
+                    labelClientVersion.Visibility = Visibility.Visible;
+                    buttonPlay.Visibility = Visibility.Visible;
+                    buttonPlay_tooltip.Text = "Download";
+                    needUpdate = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                labelVersion.Text = "Error loading config: " + ex.Message;
             }
         }
 
-        private async void Client_DownloadFileCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
+        private async Task UpdateClientAsync()
         {
-            buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_play.png")));
-            buttonPlayIcon.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/icon_play.png"));
-
-            if (clientConfig.replaceFolders)
+            try
             {
-                foreach (ReplaceFolderName folderName in clientConfig.replaceFolderName)
+                string launcherPath = LauncherUtils.GetLauncherPath(clientConfig.clientFolder, true);
+                if (!Directory.Exists(launcherPath))
                 {
-                    string folderPath = Path.Combine(GetLauncherPath(), folderName.name);
-                    if (Directory.Exists(folderPath))
+                    Directory.CreateDirectory(launcherPath);
+                }
+                labelDownloadPercent.Visibility = Visibility.Visible;
+                progressbarDownload.Visibility = Visibility.Visible;
+                labelClientVersion.Visibility = Visibility.Collapsed;
+                buttonPlay.Visibility = Visibility.Collapsed;
+
+                // Download client file using HttpClient with progress reporting.
+                using (HttpResponseMessage response = await httpClient.GetAsync(urlClient, HttpCompletionOption.ResponseHeadersRead))
+                {
+                    response.EnsureSuccessStatusCode();
+                    var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                    bool canReportProgress = totalBytes != -1;
+
+                    using (var contentStream = await response.Content.ReadAsStreamAsync())
+                    using (var fileStream = new FileStream(System.IO.Path.Combine(launcherPath, "data.zip"), FileMode.Create, FileAccess.Write, FileShare.None, 8192, true))
                     {
-                        Directory.Delete(folderPath, true);
+                        var totalRead = 0L;
+                        var buffer = new byte[8192];
+                        bool isMoreToRead = true;
+                        while (isMoreToRead)
+                        {
+                            var read = await contentStream.ReadAsync(buffer, 0, buffer.Length);
+                            if (read == 0)
+                            {
+                                isMoreToRead = false;
+                                continue;
+                            }
+                            await fileStream.WriteAsync(buffer, 0, read);
+                            totalRead += read;
+                            if (canReportProgress)
+                            {
+                                int progressPercentage = (int)((totalRead * 100) / totalBytes);
+                                progressbarDownload.Value = progressPercentage;
+                                labelDownloadPercent.Content = SizeSuffix(totalRead) + " / " + SizeSuffix(totalBytes);
+                            }
+                        }
+                    }
+                }
+
+                // Extract ZIP file
+                await Task.Run(() =>
+                {
+                    try
+                    {
+                        using (ZipFile modZip = ZipFile.Read(System.IO.Path.Combine(launcherPath, "data.zip")))
+                        {
+                            foreach (ZipEntry zipEntry in modZip)
+                            {
+                                zipEntry.Extract(launcherPath, ExtractExistingFileAction.OverwriteSilently);
+                            }
+                        }
+                        File.Delete(System.IO.Path.Combine(launcherPath, "data.zip"));
+                    }
+                    catch (Exception ex)
+                    {
+                        Dispatcher.Invoke(() => labelVersion.Text = "Extraction error: " + ex.Message);
+                    }
+                });
+
+                progressbarDownload.Value = 100;
+
+                // Download launcher_config.json using HttpClient
+                string localConfigPath = System.IO.Path.Combine(launcherPath, "launcher_config.json");
+                using (HttpResponseMessage configResponse = await httpClient.GetAsync(LauncherConfigUrl))
+                {
+                    configResponse.EnsureSuccessStatusCode();
+                    string configContent = await configResponse.Content.ReadAsStringAsync();
+                    File.WriteAllText(localConfigPath, configContent);
+                }
+
+                AddReadOnlyFiles();
+                // Create desktop shortcut.
+                string exePath = System.IO.Path.Combine(launcherPath, "", clientExecutableName);
+                //LauncherUtils.CreateShortcut("The Culling", exePath); // for client shortcut
+                LauncherUtils.CreateLauncherShortcut("The Culling");
+
+                needUpdate = false;
+                clientDownloaded = true;
+                labelClientVersion.Content = LauncherUtils.GetClientVersion(launcherPath);
+                buttonPlay_tooltip.Text = LauncherUtils.GetClientVersion(launcherPath);
+                labelClientVersion.Visibility = Visibility.Visible;
+                buttonPlay.Visibility = Visibility.Visible;
+                progressbarDownload.Visibility = Visibility.Collapsed;
+                labelDownloadPercent.Visibility = Visibility.Collapsed;
+            }
+            catch (Exception ex)
+            {
+                labelVersion.Text = "Update error: " + ex.Message;
+            }
+        }
+
+        private void AddReadOnlyFiles()
+        {
+            string launcherPath = LauncherUtils.GetLauncherPath(clientConfig.clientFolder);
+            string eventSchedulePath = System.IO.Path.Combine(launcherPath, "cache", "eventschedule.json");
+            if (File.Exists(eventSchedulePath))
+            {
+                File.SetAttributes(eventSchedulePath, FileAttributes.ReadOnly);
+            }
+            string boostedCreaturePath = System.IO.Path.Combine(launcherPath, "cache", "boostedcreature.json");
+            if (File.Exists(boostedCreaturePath))
+            {
+                File.SetAttributes(boostedCreaturePath, FileAttributes.ReadOnly);
+            }
+            string onlineNumbersPath = System.IO.Path.Combine(launcherPath, "cache", "onlinenumbers.json");
+            if (File.Exists(onlineNumbersPath))
+            {
+                File.SetAttributes(onlineNumbersPath, FileAttributes.ReadOnly);
+            }
+        }
+
+        private bool _isUpdating = false;
+        private async void buttonPlay_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdating) return;  // Prevent multiple simultaneous updates
+            _isUpdating = true;
+
+            try
+            {
+                if (needUpdate || !Directory.Exists(LauncherUtils.GetLauncherPath(clientConfig.clientFolder, true)))
+                {
+                    await UpdateClientAsync();
+                }
+                else
+                {
+                    string launcherPath = LauncherUtils.GetLauncherPath(clientConfig.clientFolder, true);
+                    if (clientDownloaded || !Directory.Exists(launcherPath))
+                    {
+                        string exePath = System.IO.Path.Combine(launcherPath, "", clientExecutableName);
+                        try
+                        {
+                            Process.Start(exePath);
+                            this.Close();
+                        }
+                        catch (Exception ex)
+                        {
+                            labelVersion.Text = "Error starting client: " + ex.Message;
+                        }
+                    }
+                    else
+                    {
+                        await UpdateClientAsync();
                     }
                 }
             }
-
-            // Adds the task to a secondary task to prevent the program from crashing while this is running
-            await Task.Run(() =>
+            finally
             {
-                Directory.CreateDirectory(GetLauncherPath());
-                ExtractZip(GetLauncherPath() + "/tibia.zip", Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
-                File.Delete(GetLauncherPath() + "/tibia.zip");
-            });
-            progressbarDownload.Value = 100;
-
-            // Download launcher_config.json from url to the launcher path
-            WebClient webClient = new WebClient();
-            string localPath = Path.Combine(GetLauncherPath(true), "launcher_config.json");
-            webClient.DownloadFile(launcerConfigUrl, localPath);
-
-            AddReadOnly();
-            CreateShortcut();
-
-            needUpdate = false;
-            clientDownloaded = true;
-            labelClientVersion.Content = GetClientVersion(GetLauncherPath(true));
-            buttonPlay_tooltip.Text = GetClientVersion(GetLauncherPath(true));
-            labelClientVersion.Visibility = Visibility.Visible;
-            buttonPlay.Visibility = Visibility.Visible;
-            progressbarDownload.Visibility = Visibility.Collapsed;
-            labelDownloadPercent.Visibility = Visibility.Collapsed;
+                _isUpdating = false;
+            }
         }
 
-		private void Client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
-		{
-			progressbarDownload.Value = e.ProgressPercentage;
-			if (progressbarDownload.Value == 100) {
-				labelDownloadPercent.Content = "Finishing, wait...";
-			} else {
-				labelDownloadPercent.Content = SizeSuffix(e.BytesReceived) + " / " + SizeSuffix(e.TotalBytesToReceive);
-			}
-		}
+        private void buttonPlay_MouseEnter(object sender, MouseEventArgs e)
+        {
+            string launcherPath = LauncherUtils.GetLauncherPath(clientConfig?.clientFolder, true);
+            if (File.Exists(System.IO.Path.Combine(launcherPath, "launcher_config.json")))
+            {
+                string actualVersion = LauncherUtils.GetClientVersion(launcherPath);
+                if (newVersion != actualVersion)
+                {
+                    buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri("pack://application:,,,/Assets/button_hover_update.png")));
+                }
+                else
+                {
+                    buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri("pack://application:,,,/Assets/button_hover_play.png")));
+                }
+            }
+            else
+            {
+                buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri("pack://application:,,,/Assets/button_hover_update.png")));
+            }
+        }
 
-		static readonly string[] SizeSuffixes = { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
-		static string SizeSuffix(Int64 value, int decimalPlaces = 1)
-		{
-			if (decimalPlaces < 0) { throw new ArgumentOutOfRangeException("decimalPlaces"); }
-			if (value < 0) { return "-" + SizeSuffix(-value, decimalPlaces); }
-			if (value == 0) { return string.Format("{0:n" + decimalPlaces + "} bytes", 0); }
+        private void buttonPlay_MouseLeave(object sender, MouseEventArgs e)
+        {
+            string launcherPath = LauncherUtils.GetLauncherPath(clientConfig?.clientFolder, true);
+            if (File.Exists(System.IO.Path.Combine(launcherPath, "launcher_config.json")))
+            {
+                string actualVersion = LauncherUtils.GetClientVersion(launcherPath);
+                if (newVersion != actualVersion)
+                {
+                    buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri("pack://application:,,,/Assets/button_update.png")));
+                }
+                else
+                {
+                    buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri("pack://application:,,,/Assets/button_play.png")));
+                }
+            }
+            else
+            {
+                buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri("pack://application:,,,/Assets/button_update.png")));
+            }
+        }
 
-			int mag = (int)Math.Log(value, 1024);
-			decimal adjustedSize = (decimal)value / (1L << (mag * 10));
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
 
-			if (Math.Round(adjustedSize, decimalPlaces) >= 1000)
-			{
-				mag += 1;
-				adjustedSize /= 1024;
-			}
-			return string.Format("{0:n" + decimalPlaces + "} {1}",
-				adjustedSize,
-				SizeSuffixes[mag]);
-		}
+        private void RestoreButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (ResizeMode != ResizeMode.NoResize)
+                WindowState = (WindowState == WindowState.Normal) ? WindowState.Maximized : WindowState.Normal;
+        }
 
-		private void buttonPlay_MouseEnter(object sender, MouseEventArgs e)
-		{
-			if (File.Exists(GetLauncherPath() + "/launcher_config.json"))
-			{
-				string actualVersion = GetClientVersion(GetLauncherPath(true));
-				if (newVersion != actualVersion)
-				{
-					buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_hover_update.png")));
-				}
-				if (newVersion == actualVersion)
-				{
-					buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_hover_play.png")));
-				}
-			}
-			else
-			{
-				buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_hover_update.png")));
-			}
-		}
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
 
-		private void buttonPlay_MouseLeave(object sender, MouseEventArgs e)
-		{
-			if (File.Exists(GetLauncherPath(true) + "/launcher_config.json"))
-			{
-				string actualVersion = GetClientVersion(GetLauncherPath(true));
-				if (newVersion != actualVersion)
-				{
-					buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_update.png")));
-				}
-				if (newVersion == actualVersion)
-				{
-					buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_play.png")));
-				}
-			}
-			else
-			{
-				buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_update.png")));
-			}
-		}
+        private static readonly string[] SizeSuffixes = { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
+        private static string SizeSuffix(long value, int decimalPlaces = 1)
+        {
+            if (value < 0) { return "-" + SizeSuffix(-value, decimalPlaces); }
+            if (value == 0) { return string.Format("{0:n" + decimalPlaces + "} bytes", 0); }
 
-		private void CloseButton_Click(object sender, RoutedEventArgs e)
-		{
-			Close();
-		}
+            int mag = (int)Math.Log(value, 1024);
+            decimal adjustedSize = (decimal)value / (1L << (mag * 10));
 
-		private void RestoreButton_Click(object sender, RoutedEventArgs e)
-		{
-			if (ResizeMode != ResizeMode.NoResize)
-			{
-				if (WindowState == WindowState.Normal)
-					WindowState = WindowState.Maximized;
-				else
-					WindowState = WindowState.Normal;
-			}
-		}
+            if (Math.Round(adjustedSize, decimalPlaces) >= 1000)
+            {
+                mag++;
+                adjustedSize /= 1024;
+            }
+            return string.Format("{0:n" + decimalPlaces + "} {1}", adjustedSize, SizeSuffixes[mag]);
+        }
 
-		private void MinimizeButton_Click(object sender, RoutedEventArgs e)
-		{
-			WindowState = WindowState.Minimized;
-		}
+        private async Task LoadRemotePatchNotesAsync()
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient { Timeout = TimeSpan.FromSeconds(20) })
+                {
+                    txtPatchNotes.Text = "Loading patch notes from server...";
+                    string json = await client.GetStringAsync(LauncherConfigUrl);
 
-	}
+                    // Deserialize the configuration JSON into your ClientConfig object.
+                    ClientConfig serverConfig = JsonConvert.DeserializeObject<ClientConfig>(json);
+
+                    // Update the TextBlock with the patch notes.
+                    if (!string.IsNullOrWhiteSpace(serverConfig.patchNotes))
+                    {
+                        txtPatchNotes.Text = serverConfig.patchNotes;
+                    }
+                    else
+                    {
+                        txtPatchNotes.Text = "No patch notes available.";
+                    }
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                txtPatchNotes.Text = "Connection timed out while loading patch notes.";
+            }
+            catch (Exception ex)
+            {
+                txtPatchNotes.Text = "Error loading patch notes: " + ex.Message;
+            }
+        }
+    }
 }
+
